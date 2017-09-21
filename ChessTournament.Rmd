@@ -1,0 +1,137 @@
+---
+title: "Chess Tournament"
+author: "Michele Bradley"
+date: "9/15/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Initially I attempted to use read.table and extract the necessary data from each column, but the data was far too messy to continue on this way. 
+
+```{r}
+Chess_Tournament <- read.table("/Users/Michele/Desktop/Chess_Tournament.txt", header=FALSE, fill=TRUE)
+
+columns <-c(1,3:13)
+myvars <- paste("V", columns, sep="")
+less_Chess_Tournament <- Chess_Tournament[myvars]
+head(less_Chess_Tournament)
+```
+
+Decided to look into alternative methods for imputting data and found readLines, and this was much cleaner.
+
+```{r}
+Chess_Tournament_readlines <- readLines("/Users/Michele/Desktop/Chess_Tournament.txt")
+head(Chess_Tournament_readlines, 10)
+```
+
+From this, I noticed that there is a pattern to the data, with every third row starting with row 5 having names and competitors, while every third rown starting on row 6 has states and ratings. 
+
+```{r}
+rows_with_names_rounds <- seq(5, 196, 3)
+names_rounds <- Chess_Tournament_readlines[rows_with_names_rounds]
+head(names_rounds)
+
+rows_with_state_ratings <- seq(6, 196, 3)
+state_rating <- Chess_Tournament_readlines[rows_with_state_ratings]
+head(state_rating)
+```
+
+Used the stringr library to extract names, states, pre-rating, post-rating, and competitors. All of this data was placed into a dataframe called Chess_Data.
+
+```{r}
+library(stringr)
+names <- unlist(str_extract_all(names_rounds, "\\w+\\s\\w+\\s\\w+\\s\\w+\\s|\\w+\\s\\w+\\s\\w+|\\w+\\s\\w+"))
+head(names)
+```
+
+```{r}
+states <- unlist(str_extract_all(state_rating, "\\s\\w{2}\\s"))
+head(states)
+```
+
+```{r}
+pre_rating <- unlist(str_extract_all(state_rating, "[:]\\s+[[:digit:]]+"))
+pre_rating <- unlist(str_extract_all(pre_rating, "[[:digit:]]+"))
+head(pre_rating)
+```
+
+```{r}
+post_rating <- unlist(str_extract_all(state_rating, "[>]\\s*[[:digit:]]+"))
+post_rating <- unlist(str_extract_all(post_rating, "[[:digit:]]+"))
+head(post_rating)
+```
+
+```{r}
+rounds <- unlist(str_extract_all(names_rounds, "\\s?[[:print:]]{1,2}[|][[:alpha:]]?"))
+
+round_1 <- rounds[seq(4, length(rounds), 10)]
+round_2 <- rounds[seq(5, length(rounds), 10)]
+round_3 <- rounds[seq(6, length(rounds), 10)]
+round_4 <- rounds[seq(7, length(rounds), 10)]
+round_5 <- rounds[seq(8, length(rounds), 10)]
+round_6 <- rounds[seq(9, length(rounds), 10)]
+round_7 <- rounds[seq(10, length(rounds), 10)]
+
+round_1 <- unlist(str_extract_all(round_1, "[[:print:]]+[^[|]][^[:alpha:]_]"))
+round_1 <- unlist(str_extract_all(round_1, "[[:print:]]+[^[|]]"))
+round_2 <- unlist(str_extract_all(round_2, "[[:print:]]+[^[|]][^[:alpha:]_]"))
+round_2 <- unlist(str_extract_all(round_2, "[[:print:]]+[^[|]]"))
+round_3 <- unlist(str_extract_all(round_3, "[[:print:]]+[^[|]][^[:alpha:]_]"))
+round_3 <- unlist(str_extract_all(round_3, "[[:print:]]+[^[|]]"))
+round_4 <- unlist(str_extract_all(round_4, "[[:print:]]+[^[|]][^[:alpha:]_]"))
+round_4 <- unlist(str_extract_all(round_4, "[[:print:]]+[^[|]]"))
+round_5 <- unlist(str_extract_all(round_5, "[[:print:]]+[^[|]][^[:alpha:]_]"))
+round_5 <- unlist(str_extract_all(round_5, "[[:print:]]+[^[|]]"))
+round_6 <- unlist(str_extract_all(round_6, "[[:print:]]+[^[|]][^[:alpha:]_]"))
+round_6 <- unlist(str_extract_all(round_6, "[[:print:]]+[^[|]]"))
+round_7 <- unlist(str_extract_all(round_7, "[[:print:]]+[^[|]]"))
+
+head(round_1)
+```
+
+```{r}
+id <- seq(1, 64, 1)
+Chess_Data <- data.frame(id, names, states, "Pre Rating" = as.numeric(pre_rating), "Post Rating" = as.numeric(post_rating), "Round 1" = as.numeric(round_1), "Round 2" = as.numeric(round_2), "Round 3" = as.numeric(round_3), "Round 4" = as.numeric(round_4), "Round 5" = as.numeric(round_5), "Round 6" = as.numeric(round_6), "Round 7" = as.numeric(round_7))
+head(Chess_Data)
+```
+
+Finally, I used a for loop to grab the Pre.Rating for each person's competitor and compute their average. This was then added to the datafram Chess_Data_Final. 
+
+```{r}
+
+Average_Opponent_Pre_Rating <- c()
+
+for (i in Chess_Data$id){
+  a <- Chess_Data[Chess_Data$'Round.1'==i, "Pre.Rating"]
+  a <- a[!is.na(a)]
+  b <- Chess_Data[Chess_Data$'Round.2'==i, "Pre.Rating"]
+  b <- b[!is.na(b)]
+  c <- Chess_Data[Chess_Data$'Round.3'==i, "Pre.Rating"]
+  c <- c[!is.na(c)]
+  d <- Chess_Data[Chess_Data$'Round.4'==i, "Pre.Rating"]
+  d <- d[!is.na(d)]
+  e <- Chess_Data[Chess_Data$'Round.5'==i, "Pre.Rating"]
+  e <- e[!is.na(e)]
+  f <- Chess_Data[Chess_Data$'Round.6'==i, "Pre.Rating"]
+  f <- f[!is.na(f)]
+  g <- Chess_Data[Chess_Data$'Round.7'==i, "Pre.Rating"]
+  g <- g[!is.na(g)]
+  x <- mean(c(a, b, c, d, e, f, g))
+  Average_Opponent_Pre_Rating  <- c(Average_Opponent_Pre_Rating, x)
+}
+```
+
+```{r}
+Chess_Data["Average Opponent Pre Rating"] <- Average_Opponent_Pre_Rating
+Chess_Data_Final <- subset(Chess_Data, select = c("id", "names", "states", "Post.Rating", "Average Opponent Pre Rating"))
+head(Chess_Data_Final)
+```
+
+Exporting dataframe to a csv.
+
+```{r}
+write.csv(Chess_Data_Final, "Chess Tournament.csv")
+```
