@@ -1,0 +1,634 @@
+---
+title: "Tidy Project: Marriage, Drugs, and Shark Attacks"
+author: "Michele Bradley"
+date: "9/28/2017"
+output:
+  rmarkdown::html_document:
+    theme: lumen
+    option: code_folding
+    toc: true
+    toc_float: true
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Project Assignment:
+Using three "wide" datasets, tidy and trasform the data using tidyr and dplyr. Then, perform analysis on these datasets. 
+
+###Marriage Data
+
+The first dataset, was found on fivethirtyeight's Github repository. All of the variables are outlined in the link below. Essentially, each column header is describing demographics that are important values for data analysis and should be included in the dataset. While matrix-like datasets like this one can be useful for quick computations and fast processing, a longer, "tidy" dataset is generally preferred. The steps towards this trasition is detailed below. 
+
+https://github.com/fivethirtyeight/data/tree/master/marriage
+
+```{r include=FALSE}
+require(RCurl)
+library('tidyr')
+library('dplyr')
+```
+
+```{r}
+#library('tidyr')
+#library('dplyr')
+marriage <- read.csv(text=getURL("https://raw.githubusercontent.com/fivethirtyeight/data/master/marriage/both_sexes.csv"), header=TRUE)
+marriage
+```
+
+Viewing this dataset as a tbl for condensing purposes is advantageous, because we have 75 columns. I thought the best way break the data down, would be to separated tables for each demographic type. We have:
+
+1. Education Levels
+2. Race
+3. Geographic Region
+4. Income
+5. Kids
+6. All
+
+###Condensing All of the Variables within the Marriage Dataset
+####Education
+
+Going to break down the data in for the education variable, but all other variables are going to be modified in a similar way. First, we grab the columns that start with an education parameter. These include:
+
+Abbreviation  | Meaning
+------------- | -------------
+HS            | High School
+SC            | Some College
+BAp           | Bachelors Degree or More
+BAo           | Bachelors Degree, no graduate degree
+GD            | Graduate Degree
+
+```{r}
+Education <- marriage %>%
+  select(starts_with("year"), starts_with("HS"), starts_with("SC"), starts_with("BAp"), starts_with("BAo"), starts_with("GD"))
+head(Education)
+```
+
+Now that we've filtered this data, we will now gather this data, based on the level of education/the age range. Each becomes a different factor level, and the percentages for each level are another column as well. 
+
+```{r}
+Education_Levels <- gather(Education, "Education.Level", "Percent.Married", 2:16)
+head(Education_Levels)
+```
+
+Next, we extract the age range value from the Education_Level Column so we have four columns: Year, Education, Age Range, and Percentage Married for each demographic group.
+
+```{r cols.print=3}
+Education_Tidy <- Education_Levels %>%
+  separate("Education.Level", c("Education", "Age.Range"), "_")
+head(Education_Tidy)
+```
+
+We continue this same process for our other variables. 
+
+####Race
+
+Abbreviation  | Meaning
+------------- | -------------
+White         | Non-Hispanic white
+Black         | Black or African-American
+Hisp          | Hispanic of any race
+
+```{r}
+Race <- marriage %>%
+  select(starts_with("year"), starts_with("White"), starts_with("Black"), starts_with("Hisp"))
+Race_Levels <- gather(Race, "Race", "Percent.Married", 2:10)
+Race_Tidy <- Race_Levels %>%
+  separate("Race", c("Race", "Age.Range"), "_")
+head(Race_Tidy)
+```
+
+####Geographic Region
+
+Abbreviation  | Meaning
+------------- | -------------
+NE            |	New England (REGION == 11)
+MA	          | Mid-Atlantic (REGION == 12)
+Midwest	      | Midwest (REGION == 21-23)
+South	        | South (REGION == 31-34)
+Mountain	    | Mountain West (REGION == 41)
+Pacific	      | Pacific (REGION == 42)
+
+```{r}
+Geography <- marriage %>%
+  select(starts_with("year"), starts_with("NE"), starts_with("MA"), starts_with("Midwest"), starts_with("South"), starts_with("Mountain"), starts_with("Pacific"))
+Geography_Levels <- gather(Geography, "Geography", "Percent.Married", 2:19)
+Geography_Tidy <- Geography_Levels %>%
+  separate("Geography", c("Geography", "Age.Range"), "_")
+head(Geography_Tidy)
+```
+
+####Income
+
+Abbreviation  | Meaning
+------------- | -------------
+poor	        | Family income in lowest 25%
+mid	          | Family income in middle 50%
+rich	        | Family income in top 25%
+
+```{r}
+Income <- marriage %>%
+  select(starts_with("year"), starts_with("poor"), starts_with("mid"), starts_with("rich"))
+Income_Levels <- gather(Income, "Income", "Percent.Married", 2:13)
+Income_Tidy <- Income_Levels %>%
+  separate("Income", c("Income", "Age.Range"), "_")
+head(Income_Tidy)
+```
+
+####Kids
+
+The columns that start with "kids" require another column because we have another demographic variable that we need to extract from the column name. They range from values regarding income, geographic location, and education, and will be placed into a column labeled "Demographic". 
+
+Abbreviation  | Meaning
+------------- | -------------
+nokids_all	  | No own children living at home
+kids_all	    | At least one own child living at home
+
+```{r}
+Kids <- marriage %>%
+  select(starts_with("year"), starts_with("kids"), starts_with("nokids"))
+Kids_Levels <- gather(Kids, "Demographic", "Percent.Married", 2:19)
+Kids_Tidy <- Kids_Levels %>%
+  separate("Demographic", c("Kids", "Demographic", "Age.Range"), "_")
+head(Kids_Tidy)
+```
+
+####All
+
+Finally, we have our "all" variable, which contains marriage data for all demographics around the United States of America. 
+
+```{r}
+All <- marriage %>%
+  select(starts_with("year"), starts_with("all"))
+All_Levels <- gather(All, "All", "Percent.Married", 2:4)
+All_Tidy <- All_Levels %>%
+  separate("All", c("All", "Age.Range"), "_")
+All_Tidy
+```
+
+These tables can't really be related in any beneficial way, so let's analyze further what's being described about marriages keepingthe demographics separated.
+
+###Graphing Marriage Data
+
+A really great resource I used while generating these graphs:
+http://tutorials.iq.harvard.edu/R/Rgraphics/Rgraphics.html
+
+```{r include=FALSE}
+library(ggplot2)
+```
+
+####All
+
+The following graph is for all people in the United States of America, and describes marriage rates for each age range.
+
+```{r}
+#library(ggplot2)
+ggplot(All_Tidy, aes(x=year, y=Percent.Married, color=Age.Range)) + geom_line()
+```
+
+Now that gives us a broad idea of how many people are married in each age group, let's break it down further. Next, by education levels. For clarity, I removed the Age Range column, hoping the total trend seen above will shine through as the typical trend.
+
+####Education Graph
+
+This describes the trends for men and women between the ages 25 and 34. It seems as though in the '60s, those with a Bachelors Degree used to marry the most, and those with a High School degree were not quite "marriage material". Now, it seems as though those who are married young more typically have lower levels of education. They are married the most frequently. 
+
+```{r warning=FALSE}
+ggplot(subset(Education_Tidy, Age.Range == "2534"),
+              aes(x=year, 
+                  y=Percent.Married, 
+                  color=Education)) + 
+  geom_line()
+```
+
+Men and women between the ages 35 and 44. The levels of marriage seem to follow those of the younger generation. Similar trends, with the least likely to be married are those who have a graduate degree. 
+
+```{r warning=FALSE}
+ggplot(subset(Education_Tidy, Age.Range == "3544"),
+              aes(x=year, 
+                  y=Percent.Married, 
+                  color=Education)) + 
+  geom_line()
+```
+
+Men and women between the ages 45 and 54. In the 1960's, those with a Bachelors Degree and no graduate degree were married the most, while now, those in High School are married most frequently for this age range. This is an interesting test to see a hint into desire for different socio-economic groups. 
+
+```{r}
+ggplot(subset(Education_Tidy, Age.Range == "4554"),
+              aes(x=year, 
+                  y=Percent.Married, 
+                  color=Education)) + 
+  geom_line()
+```
+
+
+####Race Graph
+
+The graph for race does not alter throughout the age ranges. In general, Blacks are most likely to be married throughout the years. 
+
+```{r}
+ggplot(subset(Race_Tidy, Age.Range == "2534"),
+              aes(x=year, 
+                  y=Percent.Married, 
+                  color=Race)) + 
+  geom_line()
+```
+
+####Geographic Graph
+
+What would happen if we did add back in age, taking back the separate functionality? It's too much to show in one graph, but in general it appears as though we follow a similar kind of trend. 
+
+
+```{r}
+p5 <- ggplot(Geography_Levels, aes(x = year, y = Percent.Married))
+p5 + geom_line(aes(color = Geography))  
+```
+
+
+```{r}
+(p5 <- p5 + geom_line() +
+   facet_wrap(~Geography, ncol = 3))
+```
+
+####Kids Graph
+
+It appears as though people without kids are more likely to be married.
+
+```{r warning=FALSE}
+kids_chart <- ggplot(Kids_Levels, aes(x = year, y = Percent.Married)) + geom_line(aes(color=Demographic))
+kids_chart
+```
+
+###Drug Use
+Next, I'm using a dataset on drug use, submitted by Michael D'acampora who included a github link to data found on fivethirtyeight data page. He suggested that the columns of drugs could become rows, which is accomplished below. 
+
+```{r}
+drug_use <- read.csv(text=getURL("https://raw.githubusercontent.com/fivethirtyeight/data/master/drug-use-by-age/drug-use-by-age.csv"), header=TRUE, stringsAsFactors = FALSE)
+drug_use
+```
+
+First, I gathered the data so it wouldn't have such a long format, then I separated it by the variables "drug" and "unit". Here, units described as "use" demonstrate a percentage value, while units described as "frequency" demonstrate a integer value (how many people within the n value are using that drug). In general, I believe the unit "use" and "frequency" demonstrate the same value, so I decided to only keep those that had a unit of "use". Since use is a percent, I converted the values to percents for easier analysis.
+
+```{r message=FALSE, warning=FALSE}
+Drugs_Gathered <- gather(drug_use, "Drug", "Percent", 3:28)
+Drugs_Gathered$Percent <- as.numeric(Drugs_Gathered$Percent)
+Drugs_Tidy <- separate(Drugs_Gathered, "Drug", c("Drug", "Unit"))
+Drugs_Tidyr <- filter(Drugs_Tidy, Unit=="use")
+Drugs_Tidyr
+```
+
+###Popular Age for Different Drugs 
+
+Which ages use which drugs?
+
+####Alcohol
+
+Alchohol use increases steadily until 24-25, and then it begins to decline. 
+
+```{r}
+alcohol <- ggplot(subset(Drugs_Tidyr, Drug=="alcohol"), 
+                  aes(x=Drug, y=Percent, fill=age)) + 
+                  geom_bar(stat="identity", position=position_dodge()) 
+alcohol
+```
+
+
+####Marijuana
+
+Marijuana use increases steadily until 19, where it levels off until age 22-23. It appears as though the age between 12 and 19 are the ages people begin their usage of marijuana. 
+
+```{r}
+marijuana <- ggplot(subset(Drugs_Tidyr, Drug=="marijuana"), 
+                  aes(x=Drug, y=Percent, fill=age)) + 
+                  geom_bar(stat="identity", position=position_dodge()) 
+marijuana
+```
+
+
+####Cocaine
+
+Cocaine use increases steadily until 19, and then it begins to decline. 
+
+```{r}
+cocaine <- ggplot(subset(Drugs_Tidyr, Drug=="cocaine"), 
+                  aes(x=Drug, y=Percent, fill=age)) + 
+                  geom_bar(stat="identity", position=position_dodge()) 
+cocaine
+```
+
+####Crack
+
+The use of crack interestingly stays low until age 19, where afterwards, use seems to be regular and steady throughout ones life. 
+
+```{r}
+crack <- ggplot(subset(Drugs_Tidyr, Drug=="crack"), 
+                  aes(x=Drug, y=Percent, fill=age)) + 
+                  geom_bar(stat="identity", position=position_dodge()) 
+crack
+```
+
+####Heroin
+
+Heroin use has two peaks: age 19 and age 22-23. Curious what's causing the sudden decline in 21 year olds.
+
+```{r}
+heroin <- ggplot(subset(Drugs_Tidyr, Drug=="heroin"), 
+                  aes(x=Drug, y=Percent, fill=age)) + 
+                  geom_bar(stat="identity", position=position_dodge()) 
+heroin
+```
+
+####Hallucinogen
+
+Hallucinogen use increases steadily until 19, and then it begins to decline. This is similar to the graph for cocaine and alcohol. 
+
+```{r}
+hallucinogen <- ggplot(subset(Drugs_Tidyr, Drug=="hallucinogen"), 
+                  aes(x=Drug, y=Percent, fill=age)) + 
+                  geom_bar(stat="identity", position=position_dodge()) 
+hallucinogen
+```
+
+####Inhalant
+
+Inhalant use is very popular for younger age groups. Use starts very young and declines by age 17.
+
+```{r}
+inhalant <- ggplot(subset(Drugs_Tidyr, Drug=="inhalant"), 
+                  aes(x=Drug, y=Percent, fill=age)) + 
+                  geom_bar(stat="identity", position=position_dodge()) 
+inhalant
+```
+
+####Oxycontin
+
+Oxycotin is a perscription pill used to treat pain. It appears as though use increases until age 18. It stays relatively stable, decreases by age 24-25, and then increases once more by 65+. 
+
+```{r}
+oxycontin <- ggplot(subset(Drugs_Tidyr, Drug=="oxycontin"), 
+                  aes(x=Drug, y=Percent, fill=age)) + 
+                  geom_bar(stat="identity", position=position_dodge()) 
+oxycontin
+```
+
+####Tranquilizer
+
+Trqnquilizer use increases until age 18, peaks at 21, and decreases shortly after. 
+
+```{r}
+tranquilizer <- ggplot(subset(Drugs_Tidyr, Drug=="tranquilizer"), 
+                  aes(x=Drug, y=Percent, fill=age)) + 
+                  geom_bar(stat="identity", position=position_dodge()) 
+tranquilizer
+```
+
+####Stimulant
+
+Stimulant use increases until age 21, and decreases shortly after. Similar to cocaine and halluciogens. 
+
+```{r}
+stimulant <- ggplot(subset(Drugs_Tidyr, Drug=="stimulant"), 
+                  aes(x=Drug, y=Percent, fill=age)) + 
+                  geom_bar(stat="identity", position=position_dodge()) 
+stimulant
+```
+
+#####Meth
+
+Meth use peaks at age 21 -- otherwise use is choppy. There is potentially another factor in play with Meth use that isn't age. 
+
+```{r}
+meth <- ggplot(subset(Drugs_Tidyr, Drug=="meth"), 
+                  aes(x=Drug, y=Percent, fill=age)) + 
+                  geom_bar(stat="identity", position=position_dodge()) 
+meth
+```
+
+#####Sedative
+
+Sedative use is the same for people aged 12 and those age 65+. They are both relatively high, and rarely dips beow .2% use. 
+
+```{r}
+sedative <- ggplot(subset(Drugs_Tidyr, Drug=="sedative"), 
+                  aes(x=Drug, y=Percent, fill=age)) + 
+                  geom_bar(stat="identity", position=position_dodge()) 
+sedative
+```
+
+###Popular Drugs For Different Ages
+
+####Teens
+
+As age increases in the teenage years, the percentage of children who have taken drugs also increases. There is a steady increase in use past the age of 14 for almost all drugs: alcohol, cocaine, halluciongens, marijuana, oxycotin, stimulants, and tranquilizers. Inhalants stay at a steady 3% but seems most popular for this age range. 
+
+```{r}
+twelvetoseventeen <- ggplot(subset(Drugs_Tidyr, age %in% c("12", "13","14","15", "16", "17")), 
+                  aes(x=Drug, y=Percent, fill=age)) + 
+                  geom_bar(stat="identity", position=position_dodge()) +
+                  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+twelvetoseventeen
+```
+
+####Young Adults
+
+For the age range who does the most amount of drugs, it appears as though the most popular are marijuana and alcohol, but in general these are the most common for all age groups. It starts to drop in use by age 22-23. Many other drugs are used signifcantly more than in the other age ranges. These include cocaine, halluciogens, stimulants, oxycotin, and tranquilizers. 
+
+```{r}
+eighteentotwentyfive <- ggplot(subset(Drugs_Tidyr, age %in% c("18", "19","20","21", "22-23", "24-25")), 
+                  aes(x=Drug, y=Percent, fill=age)) + 
+                  geom_bar(stat="identity", position=position_dodge()) +
+                  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+eighteentotwentyfive
+```
+
+####Adults
+
+Past age 26, the use of alchohol decreases but is still the drug of choice. Marijuana continues to decrease, but most other drugs are stable. Only increase is the use of oxycotin for the group 65+.
+
+```{r}
+twentysixandup <- ggplot(subset(Drugs_Tidyr, age %in% c("26-29", "30-34", "35-49", "50-64", "65+")), 
+                  aes(x=Drug, y=Percent, fill=age)) + 
+                  geom_bar(stat="identity", position=position_dodge()) +
+                  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+twentysixandup
+```
+
+###Shark Attacks
+
+Next, I'm using a dataset on shark attacks, submitted by Natalie Mollaghan who included a kaggle link to data found originally on www.sharkattackfile.net/incidentlog.htm. The data was downloaded from www.kaggle.com/teajay/global-shark-attacks/data. She suggested that the columns could be split for better analysis and in general there should be more standardization. I agreed with her analysis, but here I will also normalize the data by separating them into three different sheets.  
+
+```{r}
+Shark_Attacks = read.csv("/Users/Michele/Desktop/attacks.csv", header = TRUE)
+Shark_Attacks
+```
+
+Interestly, thus dataset has an illusion of many attacks. When we import it into R it says 25,614 rows. Now, let's filter Date to only show values that actually exist.
+
+```{r}
+Existing_Attacks <- filter(Shark_Attacks, Date!="")
+Existing_Attacks
+```
+
+Now, we have 6,094 attacks, what a difference!
+
+###Splitting Shark Attack Data
+
+First, I'm removed columns I found unnecessary and placed them into another table. This is Investigator information: there is a pdf and a link to their story/report. Both are more qualitative and unnecessary. I kept the case number as a primary key. 
+
+```{r}
+Investigation <- select(Existing_Attacks, one_of(c("Case.Number", "Investigator.or.Source", "pdf", "href.formula")))
+Investigation
+```
+
+Next, I made a location table, where "Location" should be able to function as a primary key and call the area and country as needed. Keeping Case.Number to join later.
+
+```{r}
+Location <- select(Existing_Attacks, one_of(c("Location", "Area", "Country", "Case.Number")))
+Location
+```
+
+Finally, I'm breaking up all of the data relevant to the fatality. This includes variables such as date, type, name of person injured, injury faced, fatailty, species, and time. Case.Number remains as a primary key. Variables removed completely include "year", which is found in the "date" variable and will be extracted.
+
+```{r}
+Attack <- select(Existing_Attacks, one_of(c("Case.Number", "Date", "Year","Type", "Activity", "Name", "Sex", "Age", "Injury", "Fatal..Y.N.","Time", "Species")))
+Attack
+```
+
+By extracting the data into three more consise tables, we are aiming for a more database-like structure and placing our data into Codd's 3rd Normal Form. 
+
+Next, I will extract data from the "Date" column, which could use some cleaning. First, it needs to extract all month-date-year variables into their own columns and then remove any values that say "Reported". While this may be a loss of data, it is important for analysis further down. There is no way to know the date it actually occured, so a reported data is just as good. The Fatal column also needs work to be analyzed. I am going to only include rows that have values containing "Y" or "N", since it is the most concise variable. Also going to remove any rows where any important variables such as "Type" are missing. 
+
+
+Also going to replace all unprovoked with a 0 and all provoked with a 1, then rename the column as "Provoked Attacks".
+
+```{r include=FALSE}
+library(stringr)
+```
+
+```{r warning=FALSE}
+#library(stringr)
+date_fix <- str_replace_all(Attack$Date, "Reported[[:blank:]]", "")
+Attack$Date <- date_fix
+Attack_Data <- Attack %>%
+  filter((Fatal..Y.N.=="Y" | Fatal..Y.N. =="N") & (Type =="Unprovoked" | Type =="Provoked")) %>%
+  separate(Date, c("Day", "Month", "Y"))
+```
+
+Used function found on stackoverflow to edit months and make it become days. 
+
+```{r}
+MonthstoNumbers <- function(x) match(tolower(x), tolower(month.abb))
+Numeric <- MonthstoNumbers(Attack_Data$Month)
+Attack_Data$Month <- Numeric
+Attack_Dates <- Attack_Data
+Attack_Dates
+```
+
+```{r}
+Tidy_Attacks <- Attack_Dates %>%  
+  select(-Y) %>%
+  unite("Date", "Year", "Month", "Day", sep="-") %>%
+  mutate(Date=as.Date(Date, format="%Y-%m-%d"))
+Tidy_Attacks
+```
+
+####Activites that're most likely to cause a shark attack
+
+I attempted to generate some form of standardization in the Activity column by looking through the dataset and finding common names throughout. I used the mutate and grepl function to edit the dataframe. Both stackoverflow pages below were helpful.
+
+https://stackoverflow.com/questions/22337394/combine-mutate-with-conditional-values
+https://stackoverflow.com/questions/40043962/r-using-dplyrmutate-with-ifelse-containing-a-grepl-gives-unexpected-result
+
+```{r warning = FALSE}
+Standard_Activities <- Tidy_Attacks %>%
+  mutate(Activity=ifelse(grepl("Boat", Activity), "Boating",
+                  ifelse(grepl("Fishing", Activity), "Fishing",
+                  ifelse(grepl("fishing", Activity), "Fishing",
+                  ifelse(grepl("Bath", Activity), "Bathing",
+                  ifelse(grepl("Diving", Activity), "Diving",
+                  ifelse(grepl("diving", Activity), "Diving",
+                  ifelse(grepl("Swim", Activity), "Swimming",
+                  ifelse(grepl("Boarding", Activity), "Body/Boogie Boarding",
+                  ifelse(grepl("boarding", Activity), "Body/Boogie Boarding",
+                  ifelse(grepl("Canoe", Activity), "Boating",
+                  ifelse(grepl("Fell", Activity), "Fell",
+                  ifelse(grepl("Kayak", Activity), "Boating",
+                  ifelse(grepl("Paddl", Activity), "Boating",
+                  ifelse(grepl("Snorkeling", Activity), "Snorkeling",
+                  ifelse(grepl("Surfing", Activity), "Surfing",
+                  ifelse(grepl("Surf", Activity), "Surfing",
+                  ifelse(grepl("surf", Activity), "Surfing",
+                  ifelse(grepl("Wading", Activity), "Wading",
+                  ifelse(grepl("shark", Activity), "Interacting with Shark",
+                  ifelse(grepl("", Activity), "None Specified",
+                   "Other")))))))))))))))))))))
+Standard_Activities
+```
+
+I then used the group_by and count functions in dplyr to determine the number of fatal attacks/provoked attacks for each actvity in the shark dataset.
+
+```{r}
+Count_Standard <- Standard_Activities %>%
+  group_by(Fatal..Y.N., Type, Activity) %>%
+  count(Activity)
+Count_Standard
+```
+
+###Injuries From Sharks Based on Activity
+
+The graph below details provoked and unprovoked shark attacks for each activity.
+
+```{r}
+shark_activities <- ggplot(Count_Standard,
+                  aes(x=Activity, y=n, fill=Type)) + 
+                  labs(y="Count", title="Provoked Injuries From Sharks") +
+                  geom_bar(stat="identity") +
+                  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+shark_activities 
+```
+
+The graph below details fatal and non-fatal shark attacks for each activity.
+
+```{r}
+shark_fatalities <- ggplot(Count_Standard,
+                  aes(x=Activity, y=n, fill=Fatal..Y.N.)) + 
+                  labs(y="Count", title="Fatalities From Sharks") +
+                  geom_bar(stat="identity") +
+                  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+shark_fatalities
+```
+
+
+###Which Country is the Safest for Shark Attacks?
+
+Left Join accomplished using Case.Number as a primary key.
+
+```{r}
+LocationandAttacks <- left_join(Tidy_Attacks, Location, by="Case.Number")
+LocationandAttacks
+```
+
+Since there are so many countries, I only took data from those where "Country" was populated and attacks were greater than 40.
+
+```{r}
+Country_Attacks <- LocationandAttacks %>%
+  group_by(Country, Fatal..Y.N.) %>%
+  count(Country)
+Country_Attacks <- (filter(Country_Attacks, n>40 & (Country!="")))
+Country_Attacks
+```
+
+It appears as though Australia, South Africa, and the USA have the most shark attacks. Bahamas, Brazil, and New Zealand also have attacks, but these were never fatal. This determines response to different attacks. 
+
+```{r}
+Country_Attacks_Graph <- ggplot(Country_Attacks, 
+      aes(x = Fatal..Y.N., y = n, color=Country,fill=Country)) +
+      geom_bar(stat="identity") 
+Country_Attacks_Graph 
+```
+
+
+
+
