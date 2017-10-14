@@ -1,9 +1,7 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="ISO-8859-1"?>
 <!DOCTYPE books>
 <books>
-	
-	<book>
-		<book_id> 1 </book_id>
+	<book id="1">
 		<title> The Anti-Social Family </title>
 		<author> Michele Barrett and Mary McIntosh</author>
 		<year> 1982 </year>
@@ -12,8 +10,7 @@
 		<review> “An extremely brave, and with the benefit of hindsight, what must appear to be a very daring critique of the family." </review>
 	</book>
 
-	<book>
-		<book_id> 2 </book_id>
+	<book id="2">
 		<title> Fortunes of Feminism </title>
 		<author> Nancy Fraser </author>
 		<year> 2013 </year>
@@ -22,8 +19,7 @@
 		<review> “Nancy Fraser is among the very few thinkers in the tradition of critical theory who are capable of redeeming its legacy in the twenty-first century.” </review>
 	</book>
 
-	<book>
-		<book_id> 3 </book_id>
+	<book id="3">
 		<title> The Erotic Margin </title>
 		<author> Irvin C. Schick </author>
 		<year> 2012 </year>
