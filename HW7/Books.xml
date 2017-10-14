@@ -3,7 +3,7 @@
 <books>
 	<book id="1">
 		<title> The Anti-Social Family </title>
-		<author> Michele Barrett and Mary McIntosh</author>
+		<author main="Michele Barrett" co-author="Mary McIntosh"/>
 		<year> 1982 </year>
 		<isbn> 9781781687598 </isbn>
 		<description> Sensitive but uncompromising socialist-feminist critique of the nuclear family </description>
