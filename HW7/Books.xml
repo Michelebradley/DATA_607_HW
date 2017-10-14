@@ -1,17 +1,31 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE books [
+<!ELEMENT books (book)>
+<!ELEMENT book (title,author,year,isbn,description, review)>
+<!ELEMENT title (#PCDATA)>
+<!ELEMENT author (#PCDATA)>
+<!ELEMENT year (#PCDATA)>
+<!ELEMENT isbn (#PCDATA)>
+<!ELEMENT description (#PCDATA)>
+<!ELEMENT review (#PCDATA)>
+<!ATTLIST author
+main CDATA #IMPLIED
+co-author CDATA #IMPLIED>
+<!ATTLIST book id CDATA #IMPLIED>
+]>
 <books>
 	<book id="1">
 		<title> The Anti-Social Family </title>
 		<author main="Michele Barrett" co-author="Mary McIntosh"/>
 		<year> 1982 </year>
 		<isbn> 9781781687598 </isbn>
-		<description> Sensitive but uncompromising socialist-feminist critique of the nuclear family </description>
-		<review> &quot;An extremely brave, and with the benefit of hindsight, what must appear to be a very daring critique of the family.&quot; </review>
+		<description> &quot;Sensitive but uncompromising socialist-feminist critique of the nuclear family </description>
+		<review> An extremely brave, and with the benefit of hindsight, what must appear to be a very daring critique of the family.&quot; </review>
 	</book>
 
 	<book id="2">
 		<title> Fortunes of Feminism </title>
-		<author> Nancy Fraser </author>
+		<author main="Nancy Fraser"/>
 		<year> 2013 </year>
 		<isbn> 9781844679843 </isbn>
 		<description> Charts the history of women's liberation and calls for a revitalized feminism. </description>
@@ -20,7 +34,7 @@
 
 	<book id="3">
 		<title> The Erotic Margin </title>
-		<author> Irvin C. Schick </author>
+		<author main="Irvin C. Schick"/>
 		<year> 2012 </year>
 		<isbn> 9781781680650 </isbn>
 		<description> Reviewing the large, disparate, and often contradictory western discourse on gender and sexuality of the Other </description>
