@@ -1,0 +1,40 @@
+{"Marxist Feminism" : [
+
+	{
+		"title" : "The Anti-Social Family",
+		"authors":{
+			"Main": "Michele Barrett",
+			"Co-Author": "Mary McIntosh"
+		},
+		"year" : 1982,
+		"isbn" : 9781781687598,
+		"description" : "Sensitive but uncompromising socialist-feminist critique of the nuclear family",
+		"review" : "An extremely brave, and with the benefit of hindsight, what must appear to be a very daring critique of the family."
+	},
+
+	{
+		"title" : "Fortunes of Feminism",
+		"authors":{
+			"Main": "Nancy Fraser",
+			"Co-Author": "NA"
+		},
+		"year" : 2013,
+		"isbn" : 9781844679843,
+		"description" : "Charts the history of women's liberation and calls for a revitalized feminism.",
+		"review" : "Nancy Fraser is among the very few thinkers in the tradition of critical theory who are capable of redeeming its legacy in the twenty-first century."
+	},
+
+	{
+		"title" : "The Erotic Margin",
+		"authors":{
+			"Main": "Irvin C. Schick",
+			"Co-Author": "NA"
+		},
+		"year" : 2012,
+		"isbn" : 9781781680650,
+		"description" : "Reviewing the large, disparate, and often contradictory western discourse on gender and sexuality of the Other",
+		"review" : "Schick explores the netherworld of ethnopornographic sources, then returns to high ground with a theory of alterist discourse that opens new horizons for eveyone interested in representations of the Other. I know of no other work that theorizes the exoticization and eroticization of the Other with such rigor or such far-reaching implications."
+	}
+
+]
+}
