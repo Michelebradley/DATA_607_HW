@@ -1,0 +1,111 @@
+---
+title: "Working with XML, JSON, and HTML in R"
+author: "Michele Bradley"
+date: "10/14/2017"
+output:
+  rmarkdown::html_document:
+    theme: lumen
+    option: code_folding
+    toc: true
+    toc_float: true
+    df_print: paged
+---
+
+###XML
+
+```{r include=FALSE}
+suppressWarnings(library(XML))
+suppressWarnings(library(RCurl))
+```
+
+```{r}
+#library(XML)
+#library(RCurl)
+
+xml_url <- "https://raw.githubusercontent.com/Michelebradley/DATA_607_HW/master/HW7/Books.xml"
+books_xml <- getURL(xml_url)
+
+XML_Books <- xmlParse(file = books_xml, validate=TRUE)
+root <- xmlRoot(XML_Books)
+```
+
+```{r}
+xmlbookdf <- xmlToDataFrame(root)
+xmlbookdf
+```
+
+https://stackoverflow.com/questions/16138693/r-rbind-multiple-data-sets
+
+```{r}
+XML_List <- xmlToList(XML_Books)
+Book1 <- as.data.frame(XML_List[1])
+Book2 <- as.data.frame(XML_List[2])
+Book3 <- as.data.frame(XML_List[3])
+
+do.call("rbind", list(Book1, Book2, Book3))
+```
+
+###JSON
+
+```{r include=FALSE}
+library(RJSONIO)
+library(stringr)
+suppressWarnings(library(dplyr))
+suppressWarnings(library(tidyr))
+```
+
+```{r}
+#library(RJSONIO)
+#library(stringr)
+#library(dplyr)
+#library(tidyr)
+
+isValidJSON("https://raw.githubusercontent.com/Michelebradley/DATA_607_HW/master/HW7/Books.json")
+booksjson <- fromJSON(content="https://raw.githubusercontent.com/Michelebradley/DATA_607_HW/master/HW7/Books.json", simplify = FALSE)
+```
+
+https://stackoverflow.com/questions/43259380/spread-with-duplicate-identifiers-using-tidyverse-and
+
+```{r}
+booksunlist <- sapply(booksjson[[1]], unlist)
+booksjsondf <- as.data.frame(as.table(booksunlist))
+Books_DF <- booksjsondf %>%
+              select(-Var2) %>%
+              group_by(Var1) %>%
+              mutate(ind= row_number()) %>%
+              spread(Var1, Freq)
+Books_DF       
+```
+
+###HTML
+
+```{r include=FALSE}
+suppressWarnings(library(XML))
+suppressWarnings(library(RCurl))
+```
+
+```{r}
+#library(XML)
+#library(RCurl)
+
+html_url <- "https://raw.githubusercontent.com/Michelebradley/DATA_607_HW/master/HW7/Books.html"
+books_html <- getURL(html_url)
+```
+
+https://stackoverflow.com/questions/4512465/what-is-the-most-efficient-way-to-cast-a-list-as-a-data-frame
+
+```{r}
+html_df <- readHTMLTable(books_html, stringsAsFactors=FALSE)
+# class(html_df) = "list"
+do.call(rbind, lapply(html_df, data.frame, stringsAsFactors=FALSE))
+```
+
+###Conclusions
+
+The three dataframes are not identical. There are distinct differences between each file, (XML, JSON, and HTML) that make writing the files and importing them different. 
+
+The XML file was easy to write since it's very readable. However, I did get a few DTD validation errors that provided an initial barrier into reading the data in. The co-author was found to be an issue, and the data structure of the XML datatable is not very pretty. But, I think if we didn't have those technicalities, I would have preferred working with XML -- xmltoDataFrame makes things easy. 
+
+The JSON file was also readable, but a little less so than the XML file. I did like the fact that there weren't any encodings or validation errors that we had to work around. Reading the file in initially, I didn't include a co-author for each book, but then I started having difficulty reading the data in without it, so I included a Co-Author: NA to books with one author. Worked great making it a dataframe. 
+
+HTML was the most different from XML and JSON. The text was very different to write, but after getting over the inital difference, it was really easy to create a table using HTML. Then, you could read the HTML table using readHTMLTable. Unfortunately, that came in as a list, so I had to do some digging online so as to make the list into a dataframe. There's also this NULL value that got attached somewhere, I'm not sure how.
