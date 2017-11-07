@@ -1,0 +1,87 @@
+---
+title: "How do Retail Companies Perform Recommendations?"
+author: "Michele Bradley"
+date: "11/6/2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Using NeedSupply, a clothing company that includes indie fashion designers as an example of a recommender system, we aim to inspect it's scenario design and attempt to reverse engineer its recommender system.
+
+## Scenario Design
+
+Scenario Design is an easy-to-use “three question framework” that helps you in making sure that the information in your analysis work takes UX (user experience) into account:
+
+![Three Question Framework](https://github.com/Michelebradley/DATA_607_HW/blob/master/Recommender_Systems/three_question_framework.png?raw=true)
+
+1. Who are your Target Users?
+
+NeedSupply is an online retailer that carries a host of different fashion designers. Some brands are well known but doing things a bit different -- either being fashion forward, sustainability focued, or artisan based, while others are more independent and lesser known. I would say NeedSupply's Target User is someone looking for new, fashionable clothing not often found at your regular Department Store. It's a place where fashion-forward young adults can find clothing that fit multiple needs, interests, and fashion styles. Because the company fills a niche product market already, I do not believe we would need a recommender system to perform twice -- once on the products should suffice.
+
+2. What are their Key Goals?
+
+Like any for-profit retailer, the key goal is to sell as many products as possible.
+
+3. How can you help them achieve their goals?
+
+In this analysis, we are going to be delving into Recommender Systems in the Retail sector, and potentially provide insights into how to better improve their recommendations shown online.
+
+## Retail Recommender Systems
+
+Looking at different fashion websites, I found a couple different recommendation systems being used, but decided to further investigate NeedSupply because it appeared to be the most complex. I will compare it to the brand Eileen Fisher, which uses a much simplier approach.
+
+### Eileen Fisher
+
+Eileen Fisher recommends products to its customers in two ways.
+
+In the suede boot screenshot below, Eileen Fishes uses a "You May Also Like" section -- displaying apparel the company sells that is similar in scope to other products they sell. In general, this section displays clothing/accessories that is nearly identical to the one an online user was first interested in. They are likely using tags or clusters to determine clothing that is similar to one another. In particular, I noticed that items in this section were typically similar in shape/material to those of the original item. The boots recommended below are made of the same material, are the same color, and are the same style as the originals.
+
+```{r, include=FALSE}
+library(webshot)
+```
+
+```{r}
+#library(webshot)
+webshot("https://www.eileenfisher.com/tread-wedge-bootie-in-tumbled-nubuck-ef43991/?&color=1958", cliprect = c(0, 0, 1200, 1300), delay=0.5)
+```
+
+Another common recommendation for clothing companies is a "Complete The Look" section, as shown in the screenshot below. For Eileen Fisher, I do not believe they use any form of clustering or recommender system. I beileve the photos generated in the original styling are being shown here.
+
+```{r}
+webshot("https://www.eileenfisher.com/fine-merino-ribbed-a-line-top-r7liv-w4496/?&color=2267", cliprect = c(0, 0, 1200, 1300), delay=0.5)
+```
+
+### Patagonia
+
+Patagonia recommends products as well, but instead of taking a product approach, it takes a people approach, showing products other people viewed/purchased while on a webpage for a specific product.
+
+![Patagonia](https://github.com/Michelebradley/DATA_607_HW/blob/master/Recommender_Systems/patagonia.png?raw=true)
+
+### Need Supply
+
+In general, most retailers take either the people approach or the product approach. NeedSupply only shows a "Recommended" Section that is a bit more challenging to reverse engineer -- but I believe it takes a hybrid approach, taking into account both product and people (in particular I believe they use popularity as a metric). 
+
+If we take some examples of shirts in NeedSupply's product line -- we have below a $450 cropped sweater with baby alpaca pom-poms sewed on, and a 
+$63 feminine V-neck polyester top. Both have black wide legged 
+$395 sailor pants in their list of recommended products. Is there anything really similar between these two tops so that a common pant would be recommended?
+
+![PomPom Crop Pullover](https://github.com/Michelebradley/DATA_607_HW/blob/master/Recommender_Systems/needsupply_pompom.png?raw=true)
+
+![Ella Top](https://github.com/Michelebradley/DATA_607_HW/blob/master/Recommender_Systems/needsupply_vneck.png?raw=true)
+
+I don't see much overlap, which is why I believe NeedSupply is using something similar to Amazon's Item-to-Item Collaborative Filtering methodoloy. The other items being recommended appear to have some similarity in term of product -- the PomPom sweater includes a very graphic and eccentric sculptured bamboo bag called Lilleth, while the feminine top includes more feminine items such as Girlfriend Jeans and $350 melon and chrysanthemum eau de parfume. 
+
+Amazons' item-to-item filtering method matches items to similar items by finding items customers tend to purchase together and then recommends the most popular items. I believe NeedSupply is doing something similar, which is why clothing that falls at the intersection of eccentric and feminine (like theses pants) would be used as recommendations for seemingly very different items. The pants must be either incredibly popular, or are being heavily marketed by the company.
+
+#### Recommendations
+
+I think currently, NeedSupply is recommending products in a thoughful manner, but can improve their methodology by incorporating some form of cluster analysis. Individual's clothing perferences often incoporate a range of desires and needs, and many factors come into play before making a final purchase. I would recommend the company attempt to cluster products together and find categories of similarity (such as eccentric and feminine) and recommend products based on these categories. I would also recommend a price filter on recommendations. While companies may like to promote more expensive items, I don't see $350 parfume and a cheaper polyster shirt in the same cluster for recommendations. 
+
+## References
+
+Greg Linden, Brent Smith, and Jeremy York, "Amazon.com Recommendations:  Item-to-Item Collaborative Filtering,"  IEEE Internet Computing, 2003.  https://datajobs.com/data-science-repo/Recommender-Systems-[Amazon].pdf
+
+Xiaosong Hu, Wen Zhu and Qing Li, "HCRS: A hybrid clothes recommender system based on user ratings and product features," Sch. of Economic Inf. Eng. Southwestern Univ. of Finance & Econ. https://arxiv.org/pdf/1411.6754.pdf
