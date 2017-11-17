@@ -1,0 +1,140 @@
+---
+title: "Neo4J: Recipe Graph Database"
+author: "Michele Bradley"
+date: "11/14/2017"
+output:
+  rmarkdown::html_document:
+    theme: lumen
+    option: code_folding
+    toc: true
+    toc_float: true
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Recipe Database
+The intent with this database, was to visually represent 20 of my favorite recipies. I was inspired by Neo4J's sample movies database, and thought the interaction of actors/movies/directors was similar to the interaction of ingredients in recipies. I generated this database in two ways. 
+
+1. Using CSV files exported from a MySQL database
+2. Using Neo4J's database generation language Cypher
+
+### Generating Graphic Database using CSVs
+
+I followed Neo4J's Northwind Graph sample database that converted a relational database to a graphical database using external CSV files. Indexes were generated on the primary keys and foriegn keys were matched to form data relationships. The main downside was that graphical databases did not function in the same "spider" format -- and there were no visual relationships being portrayed here between the major nodes. 
+
+![](/Users/Michele/Desktop/csv.png)
+
+### Generating Graphic Database using Cypher
+
+I found using Cypher's language to generate a Neo4J database to be the best way to construct the visual charts so we can analyze the data. There are benefits to just seeing these cluters of data -- the right side appears to display "sweets" while the left displays savory. There are also pockets within that demonstrate different tastes. Savory asian dishes for example, are bunched together because they use similar ingredients. I think graphical databases like Neo4J could be used to generate recipes and ingredients that commonly work well together. (A concept already attempted by the way, link is here: http://aiweirdness.com/tagged/cookbook)
+
+![](/Users/Michele/Desktop/neo4j.png)
+
+### RNeo4j
+
+Finally, I attemped to use RNeo4J using the tutorial below. I was able to successfully import all of the data into a Neo4J database.
+
+https://neo4j.com/blog/upload-last-fm-data-neo4j-rneo4j-transactional-endpoint/
+
+```{r}
+library(RNeo4j)
+```
+
+```{r}
+#library(RNeo4j)
+
+Foods = startGraph("http://localhost:7474/db/data/")
+
+URL1 <- "https://raw.githubusercontent.com/Michelebradley/DATA_607_HW/master/GraphDatabase/titles.csv"
+URL2 <- "https://raw.githubusercontent.com/Michelebradley/DATA_607_HW/master/GraphDatabase/ingredients.csv"
+
+titles <- read.csv(URL1, header=TRUE)
+ingredients <- read.csv(URL2, header=TRUE)
+```
+
+```{r}
+addConstraint(Foods, "Recipe_ID", "Recipe_ID")
+
+query1 <- "
+CREATE (r:Recipe {Recipe_ID: {Recipe_ID}, Recipe_Title: {Recipe_Title}, Source: {Source}, Diet: {Diet}, Meal: {Meal}})
+"
+
+f = newTransaction(Foods)
+
+for (i in 1:nrow(titles)) {
+  appendCypher(f, 
+               query1, 
+               Recipe_ID = titles$Recipe_ID[i], 
+               Recipe_Title = titles$Recipe_Title[i],
+               Source = titles$Source[i],
+               Diet = titles$Diet[i],
+               Meal = titles$Meal[i])
+}
+
+commit(f)
+```
+
+```{r}
+addConstraint(Foods, "Ingredient_ID", "Ingredient_ID")
+
+query2 <- "
+CREATE (i:Ingredient {Ingredient_ID: {Ingredient_ID}, Ingredient_Name: {Ingredient_Name}, Ingredient_Num_Measurement: {Ingredient_Num_Measurement}, Ingredient_Unit_Measurement: {Ingredient_Unit_Measuremen}, Recipe_ID: {Recipe_ID}})
+"
+
+f = newTransaction(Foods)
+
+for (i in 1:nrow(ingredients)) {
+  appendCypher(f, 
+               query2, 
+               Ingredient_ID = ingredients$Ingredient_ID[i], 
+               Ingredient_Name = ingredients$Ingredient_Name[i],
+               Ingredient_Num_Measurement = ingredients$Ingredient_Num_Measurement[i],
+               Ingredient_Unit_Measuremen = ingredients$Ingredient_Unit_Measurement[i],
+               Recipe_ID = ingredients$Recipe_ID[i])
+}
+
+commit(f)
+```
+
+```{r}
+query3 <- "MATCH (i:Ingredient), (r:Recipe)
+WHERE i.Recipe_ID = r.Recipe_ID
+CREATE (i)-[:INGREDIENT_IN]->(r)"
+
+cypher(Foods, query3)
+```
+
+#### Sample Query using RNeo4J
+
+```{r}
+query4 = "MATCH (i:Ingredient)-->(r:Recipe) RETURN i.Ingredient_Name, collect(distinct r.Meal) as Categories"
+output = cypher(Foods, query4)
+
+head(output)
+```
+
+### Pros/Cons of a Graphic NoSQL Database
+
+#### Pros
+ - Faster processing/querying/adding new data <br>
+ - Flexible and can take in data without worrying about null values, relationship issues, or data structures <br>
+ - Build relationships based on nodes, so it is easier to analyze relationships between nodes
+ 
+#### Cons
+ - No standard query language <br>
+ - No predefined schema <br>
+ - Few tools to support data analytics
+ 
+### Pros/Cons of a Relational Database
+
+#### Pros
+  - Data is structured and organized <br>
+  - Commonly used Structured Query Langauge <br>
+  - Atomic transactions support
+
+#### Cons
+  - Fixed schema for organizing data that can be difficult to edit once implemented <br>
+  - Isn't community-driven
